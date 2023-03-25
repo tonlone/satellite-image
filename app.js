@@ -33,8 +33,8 @@ window.addEventListener('load', ()=> {
         navigator.geolocation.getCurrentPosition(position => {
             long = position.coords.longitude;
             lat = position.coords.latitude;
-            console.log("here long:", long);
-            console.log("here lat:", lat);
+            console.log("long:", long);
+            console.log("lat:", lat);
 
             map = L.map('mapid').setView([lat, long], 8);
 
