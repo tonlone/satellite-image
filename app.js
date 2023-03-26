@@ -86,7 +86,7 @@ window.addEventListener('load', ()=> {
  */
 function initialize(api, kind) {
     // remove all already added tiled layers
-    for (var i in radarLayers) {
+    for (let i in radarLayers) {
         map.removeLayer(radarLayers[i]);
     }
     mapFrames = [];
@@ -96,7 +96,7 @@ function initialize(api, kind) {
     if (!api) {
         return;
     }
-    if (kind == 'satellite' && api.satellite && api.satellite.infrared) {
+    if (kind === 'satellite' && api.satellite && api.satellite.infrared) {
         mapFrames = api.satellite.infrared;
 
         lastPastFramePosition = api.satellite.infrared.length - 1;
@@ -165,20 +165,20 @@ function setKind(kind) {
 }
 
 function setColors() {
-    var e = document.getElementById('colors');
+    const e = document.getElementById('colors');
     optionColorScheme = e.options[e.selectedIndex].value;
     initialize(apiData, optionKind);
 }
 
 /**
  * Animation functions
- * @param path - Path to the XYZ tile
+ * @param frame
  */
 function addLayer(frame) {
     if (!radarLayers[frame.path]) {
-        const colorScheme = optionKind == 'satellite' ? 0 : optionColorScheme;
-        const smooth = optionKind == 'satellite' ? 0 : optionSmoothData;
-        const snow = optionKind == 'satellite' ? 0 : optionSnowColors;
+        const colorScheme = optionKind === 'satellite' ? 0 : optionColorScheme;
+        const smooth = optionKind === 'satellite' ? 0 : optionSmoothData;
+        const snow = optionKind === 'satellite' ? 0 : optionSnowColors;
 
         const source = new L.TileLayer(apiData.host + frame.path + '/' + optionTileSize + '/{z}/{x}/{y}/' + colorScheme + '/' + smooth + '_' + snow + '.png', {
             tileSize: 256,
@@ -203,7 +203,7 @@ function addLayer(frame) {
  * Check avialability and show particular frame position from the timestamps list
  */
 function showFrame(nextPosition, force) {
-    var preloadingDirection = nextPosition - animationPosition > 0 ? 1 : -1;
+    const preloadingDirection = nextPosition - animationPosition > 0 ? 1 : -1;
 
     changeRadarPosition(nextPosition, false, force);
 
@@ -227,8 +227,8 @@ function changeRadarPosition(position, preloadOnly, force) {
         position += mapFrames.length;
     }
 
-    var currentFrame = mapFrames[animationPosition];
-    var nextFrame = mapFrames[position];
+    const currentFrame = mapFrames[animationPosition];
+    const nextFrame = mapFrames[position];
 
     addLayer(nextFrame);
 
@@ -246,7 +246,7 @@ function changeRadarPosition(position, preloadOnly, force) {
     radarLayers[nextFrame.path].setOpacity(100);
 
 
-    var pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
+    const pastOrForecast = nextFrame.time > Date.now() / 1000 ? 'FORECAST' : 'PAST';
 
     document.getElementById("timestamp").innerHTML = pastOrForecast + ': ' + (new Date(nextFrame.time * 1000)).toString();
 }
