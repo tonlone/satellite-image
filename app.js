@@ -70,7 +70,7 @@
     function initMap(lat, lon) {
         map = L.map("mapid", {
             center: [lat, lon],
-            zoom: 8,
+            zoom: 7,
             zoomControl: true,
             layers: [baseLayers.streets]
         });
