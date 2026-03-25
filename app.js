@@ -1,4 +1,4 @@
-h"use strict";
+"use strict";
 
 (function () {
     /* ── Config ── */
