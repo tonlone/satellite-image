@@ -81,6 +81,9 @@
         /* Show app */
         elLoading.classList.add("hidden");
         elApp.classList.remove("hidden");
+
+        /* Fix Leaflet rendering after container becomes visible */
+        setTimeout(function () { map.invalidateSize(); }, 200);
     }
 
     /* ── RainViewer ── */
