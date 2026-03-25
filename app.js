@@ -1,4 +1,4 @@
-"use strict";
+h"use strict";
 
 (function () {
     /* ── Config ── */
@@ -15,7 +15,7 @@
     let radarLayers = [];
     let activeOverlay = "radar";
     let optionColorScheme = 4;
-    const optionTileSize = 256;
+    const optionTileSize = 512;
     const optionSmoothData = 1;
     const optionSnowColors = 1;
     let animationPosition = 0;
