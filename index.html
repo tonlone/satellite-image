@@ -1,42 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Satellite image for current location</title>
-
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-
-    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet"/>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="600">
+    <title>Satellite &amp; Radar Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<ul style="text-align:center; position: absolute;top: 0; left: 0; right: 0; height: 50px;">
-    <li><input type="radio" name="kind" checked="checked" onchange="setKind('radar')">Radar (Past + Future) <input type="radio" name="kind" onchange="setKind('satellite')">Infrared Satellite</li>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <span>Detecting location&hellip;</span>
+</div>
 
-    <li><input type="button" onclick="stop(); showFrame(animationPosition - 1); return;" value="&lt;" /></li>
-    <li><input type="button" onclick="playStop();" value="Play / Stop" /></li>
-    <li><input type="button" onclick="stop(); showFrame(animationPosition + 1); return;" value="&gt;" /></li>
+<!-- Main App -->
+<div id="app" class="app hidden">
 
-    <li><select id="colors" onchange="setColors(); return;">
-        <option value="0">Black and White Values</option>
-        <option value="1">Original</option>
-        <option value="2">Universal Blue</option>
-        <option value="3">TITAN</option>
-        <option value="4" selected="selected">The Weather Channel</option>
-        <option value="5">Meteored</option>
-        <option value="6">NEXRAD Level-III</option>
-        <option value="7">RAINBOW @ SELEX-SI</option>
-        <option value="8">Dark Sky</option>
-    </select></li>
-    <li><a href="https://weather-js-project.vercel.app/">Today's weather</a></li>
-</ul>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <h1 class="app-title">Satellite &amp; Radar</h1>
+            <div class="location-text">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span id="location-name">Detecting&hellip;</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <span id="current-datetime" class="date-time"></span>
+        </div>
+    </header>
 
-<div id="timestamp" style="text-align:center; position: absolute;top: 50px; left: 0; right: 0; height: 80px;">FRAME TIME</div>
+    <!-- Layer Tabs -->
+    <div class="source-tabs">
+        <button class="tab-btn active" data-layer="radar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            Radar
+        </button>
+        <button class="tab-btn" data-layer="satellite">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20l3.5-3.5"/><path d="M7.5 13.5L10 16"/><path d="M12 8l5 5"/><path d="M17 3l4 4"/><circle cx="18.5" cy="5.5" r="2.5"/></svg>
+            IR Satellite
+        </button>
+        <button class="tab-btn" data-layer="clouds">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            Clouds
+        </button>
+        <button class="tab-btn" data-layer="precipitation">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+            Precipitation
+        </button>
+        <button class="tab-btn" data-layer="temp">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+            Temperature
+        </button>
+        <button class="tab-btn" data-layer="wind">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+            Wind
+        </button>
+    </div>
 
-<div id="mapid" style="position: absolute; top: 80px; left: 0; bottom: 0; right: 0;"></div>
+    <!-- Map Container -->
+    <div class="map-wrapper">
+        <div id="mapid"></div>
+
+        <!-- Animation Controls (for radar/satellite) -->
+        <div id="anim-controls" class="anim-controls">
+            <div class="anim-bar">
+                <button id="btn-prev" class="anim-btn" title="Previous frame">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <button id="btn-play" class="anim-btn play-btn" title="Play / Pause">
+                    <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                    <svg id="icon-pause" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                </button>
+                <button id="btn-next" class="anim-btn" title="Next frame">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </button>
+                <div class="anim-divider"></div>
+                <span id="timestamp" class="anim-timestamp">Loading&hellip;</span>
+            </div>
+        </div>
+
+        <!-- Base Map Selector -->
+        <div class="basemap-selector">
+            <button class="basemap-btn active" data-base="streets" title="Streets">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+            </button>
+            <button class="basemap-btn" data-base="satellite" title="Satellite">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </button>
+            <button class="basemap-btn" data-base="topo" title="Topographic">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 20L2 20"/><path d="m4 16 4-6 4 4 4-8 4 6"/></svg>
+            </button>
+            <button class="basemap-btn" data-base="dark" title="Dark">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </div>
+
+        <!-- Color Scheme (for radar) -->
+        <div id="color-scheme" class="color-scheme">
+            <select id="colors">
+                <option value="4" selected>The Weather Channel</option>
+                <option value="2">Universal Blue</option>
+                <option value="8">Dark Sky</option>
+                <option value="1">Original</option>
+                <option value="3">TITAN</option>
+                <option value="5">Meteored</option>
+                <option value="6">NEXRAD Level-III</option>
+                <option value="0">Black &amp; White</option>
+                <option value="7">RAINBOW @ SELEX-SI</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-links">
+            <a href="https://weather-js-project.vercel.app/">Current Weather</a>
+            <span class="dot-sep"></span>
+            <a href="https://weather-forecast-project.vercel.app/">Forecast</a>
+            <span class="dot-sep"></span>
+            <span>Powered by <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> &middot; <a href="https://openweathermap.org/" target="_blank" rel="noopener">OpenWeather</a> &middot; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a></span>
+        </div>
+    </footer>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
-
